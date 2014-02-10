@@ -3,7 +3,7 @@ import Data.List
 import Data.Ord
 
 type PosList = [((Int, Int), (Float, Float))]
-type Path = [((Int, Int), Float)]
+type Path = [((Int, Int), (Float, Char))]
 
 main = do
 	handle <- openFile "map.txt" ReadMode
@@ -50,30 +50,38 @@ findPath heuristic entryPos = expandFrontier heuristic ([], [(entryPos, (0.0, he
 buildPath :: PosList -> Path
 buildPath visitedList = buildPath' visitedList [firstStep]
 	where
-		firstStep = head [ (x, g) | (x, (g, h)) <- visitedList, h == 0 ]
+		firstStep = head [ (x, (g, '$')) | (x, (g, h)) <- visitedList, h == 0 ]
 		
 		buildPath' :: PosList -> Path -> Path
 		buildPath' visitedList path
 			| lowestGScore == 0 = path
 			| otherwise = (buildPath' trimmedList (nextStep:path))
 			where
-				lowestGScore = head . sort $ [ g | (x,g) <- path ]
+				lowestGScore = head . sort $ [ g | (_,(g, _)) <- path ]
 			
 				currentStep = fst . head $ path
 				neighbors (x,y) (x',y') = (abs (x - x')) + (abs (y - y')) == 1
-				nextStep = head . sortBy (comparing snd) $ [ (x, g) | (x, (g, _)) <- visitedList, neighbors x currentStep]
+				direction (x, y) (x', y')
+					| x' > x = '>'
+					| x' < x = '<'
+					| y' > y = 'v'
+					| otherwise = '^'
+					
+				nextStep = head . sortBy (comparing snd) $ [ (x, (g, c)) | (x, (g, _)) <- visitedList, neighbors x currentStep, let c = direction x currentStep]
 	
-				trimmedList = [ x | x <- visitedList, gScore x < snd nextStep ]
+				trimmedList = [ x | x <- visitedList, gScore x < (fst . snd $ nextStep) ]
 				
-showPath m path = showPath' indexMap pathPos
+showPath m path = map (map (getChar)) indexMap
 	where
 		indexMap = [ [ (x, (c, r)) | (x, c) <- zip xs [0..] ] | (xs,r) <- zip m [0..] ]
 		
 		pathPos = [ x | (x,_) <- path ]
 		
 		getChar (x, (c, r))
-				| x == '.' = if ((c, r) `elem` pathPos) then '*' else ' '
-				| otherwise = x
+			| x == '.' = if ((c, r) `elem` pathPos) then pathChar (c, r) else ' '
+			| otherwise = x
+			where
+				pathChar (x, y) = head [ c | ((x', y'), (_, c)) <- path,  (x, y) == (x', y') ]
 		
 		showPath' im p = map (map (getChar)) im
  
