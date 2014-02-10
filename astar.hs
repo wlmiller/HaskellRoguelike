@@ -22,6 +22,7 @@ main = do
 	putStrLn $ unlines . showPath mapLines $ path
 	hClose handle
 
+gScore, hScore, fScore :: (a, (Float, Float)) -> Float
 gScore (_,(g,_)) = g
 hScore (_,(_,h)) = h
 fScore pos = (gScore pos) + (hScore pos)
@@ -40,11 +41,12 @@ expandFrontier heuristic (visited, frontier)
 			[ ((x+dx, y+dy), (gScore pos + 1.0, heuristic (x+dx, y+dy))) | dx <- [-1..1] 
 																		, dy <- [-1..1] 
 																		, (abs dx) + (abs dy) == 1
-																		, heuristic (x+dx,y+dy) /= read "Infinity"
+																		--, heuristic (x+dx,y+dy) /= read "Infinity"
 																		, not $ (x + dx, y + dy) `elem` visitedPos ]
 		
 		expandFrom pos = (pos:visited, (neighbors $ fst pos) ++ rest)
  
+findPath :: ((Int, Int) -> Float) -> (Int, Int) -> (PosList, PosList)
 findPath heuristic entryPos = expandFrontier heuristic ([], [(entryPos, (0.0, heuristic entryPos))])
 
 buildPath :: PosList -> Path
@@ -71,6 +73,7 @@ buildPath visitedList = buildPath' visitedList [firstStep]
 	
 				trimmedList = [ x | x <- visitedList, gScore x < (fst . snd $ nextStep) ]
 				
+showPath :: [[Char]] -> Path -> [[Char]]
 showPath m path = map (map (getChar)) indexMap
 	where
 		indexMap = [ [ (x, (c, r)) | (x, c) <- zip xs [0..] ] | (xs,r) <- zip m [0..] ]
