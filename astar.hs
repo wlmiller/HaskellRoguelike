@@ -99,6 +99,7 @@ validateMap m
 	| (length . concat . map (filter (=='$')) $ m) /= 1 = error "Must have exactly one exit ('$')!"
 	| (length . concat . map (filter (=='@')) $ m) /= 1 = error "Must have exactly one entrance ('@')!"
 	| (length . concat . map (filter (not . flip(elem) "#.$@")) $ m) > 0 = error "Unexpected symbol!  Only '#', '.', '$', and '@' allowed."
+	| (length . nub $ map (length) m) > 1 = error "Map must be rectangular!"
 	| otherwise =	-- Make sure there's a wall around the whole map.  This way there's no need to worry about running off the map later.
 		let
 			width = length . head $ m
