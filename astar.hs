@@ -3,6 +3,7 @@ import Data.List
 import Data.Ord
 
 type PosList = [((Int, Int), (Float, Float))]
+type Path = [((Int, Int), Float)]
 
 main = do
 	handle <- openFile "map.txt" ReadMode
@@ -14,9 +15,10 @@ main = do
 	putStr $ unlines $ mapLines
 	putStrLn $ "Exit location:  " ++ (show exitPos) 
 	putStrLn $ "Entry location: " ++ (show entryPos)
-	let firststep = findPath heuristic entryPos
+	let allVisited = findPath heuristic entryPos
 	putStrLn ""
-	putStrLn $ "Shortest path: " ++ (show $ gScore . head . fst $ firststep) ++ " units."
+	putStrLn $ "Shortest path: " ++ (show $ gScore . head . fst $ allVisited) ++ " units."
+	putStrLn $ "Path: " ++ (show $ buildPath . fst $ allVisited)
 	hClose handle
 
 gScore (_,(g,_)) = g
@@ -43,6 +45,24 @@ expandFrontier heuristic (visited, frontier)
 		expandFrom pos = (pos:visited, (neighbors $ fst pos) ++ rest)
  
 findPath heuristic entryPos = expandFrontier heuristic ([], [(entryPos, (0.0, heuristic entryPos))])
+
+buildPath :: PosList -> Path
+buildPath visitedList = buildPath' visitedList [firstStep]
+	where
+		firstStep = head [ (x, g) | (x, (g, h)) <- visitedList, h == 0 ]
+		
+		buildPath' :: PosList -> Path -> Path
+		buildPath' visitedList path
+			| lowestGScore == 0 = path
+			| otherwise = (buildPath' trimmedList (nextStep:path))
+			where
+				lowestGScore = head . sort $ [ g | (x,g) <- path ]
+			
+				currentStep = fst . head $ path
+				neighbors (x,y) (x',y') = (abs (x - x')) + (abs (y - y')) == 1
+				nextStep = head . sortBy (comparing snd) $ [ (x, g) | (x, (g, _)) <- visitedList, neighbors x currentStep]
+	
+				trimmedList = [ x | x <- visitedList, gScore x < snd nextStep ]
  
 heuristic' :: [[Char]] -> (Int, Int) -> (Int, Int) -> Float
 heuristic' m (endX, endY) (x, y)
