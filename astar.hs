@@ -12,13 +12,14 @@ main = do
 	let exitPos = findChar '$' mapLines
 	let entryPos = findChar '@' mapLines
 	let heuristic = heuristic' mapLines exitPos
-	putStr $ unlines $ mapLines
+	putStr $ unlines . showPath mapLines $ []
 	putStrLn $ "Exit location:  " ++ (show exitPos) 
 	putStrLn $ "Entry location: " ++ (show entryPos)
-	let allVisited = findPath heuristic entryPos
+	let allVisited = fst . findPath heuristic $ entryPos
+	let path = buildPath allVisited
 	putStrLn ""
-	putStrLn $ "Shortest path: " ++ (show $ gScore . head . fst $ allVisited) ++ " units."
-	putStrLn $ "Path: " ++ (show $ buildPath . fst $ allVisited)
+	putStrLn $ "Shortest path: " ++ (show $ gScore . head $ allVisited) ++ " units."
+	putStrLn $ unlines . showPath mapLines $ path
 	hClose handle
 
 gScore (_,(g,_)) = g
@@ -63,6 +64,18 @@ buildPath visitedList = buildPath' visitedList [firstStep]
 				nextStep = head . sortBy (comparing snd) $ [ (x, g) | (x, (g, _)) <- visitedList, neighbors x currentStep]
 	
 				trimmedList = [ x | x <- visitedList, gScore x < snd nextStep ]
+				
+showPath m path = showPath' indexMap pathPos
+	where
+		indexMap = [ [ (x, (c, r)) | (x, c) <- zip xs [0..] ] | (xs,r) <- zip m [0..] ]
+		
+		pathPos = [ x | (x,_) <- path ]
+		
+		getChar (x, (c, r))
+				| x == '.' = if ((c, r) `elem` pathPos) then '*' else ' '
+				| otherwise = x
+		
+		showPath' im p = map (map (getChar)) im
  
 heuristic' :: [[Char]] -> (Int, Int) -> (Int, Int) -> Float
 heuristic' m (endX, endY) (x, y)
