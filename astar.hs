@@ -1,20 +1,23 @@
 import System.IO
 import Data.List
 import Data.Ord
+import Data.Array
 
 type PosList = [((Int, Int), (Float, Float))]
 type Path = [((Int, Int), (Float, Char))]
+type MapArray = Array (Int, Int) Char
 
 main = do
 	handle <- openFile "map.txt" ReadMode
 	inputMap <- hGetContents handle
 	let mapLines = validateMap . lines $ inputMap	-- It's my understanding that a list of lists is a poor way to do this.  I'd like to switch this out for a 2D array eventually.
-	let exitPos = findChar '$' mapLines
-	let entryPos = findChar '@' mapLines
+	let mapArray = toArray mapLines
+	let exitPos = findChar '$' mapArray
+	let entryPos = findChar '@' mapArray
 	let heuristic = heuristic' mapLines exitPos
 	putStr $ unlines . showPath mapLines $ []
-	putStrLn $ "Exit location:  " ++ (show exitPos) 
 	putStrLn $ "Entry location: " ++ (show entryPos)
+	putStrLn $ "Exit location:  " ++ (show exitPos) 
 	let allVisited = fst . findPath heuristic $ entryPos
 	let path = buildPath allVisited
 	putStrLn ""
@@ -119,12 +122,11 @@ validateMap m
 				else m'''
 		in m''''
 		
-findChar :: (Eq a) => a -> [[a]] -> (Int, Int)
-findChar x m = head [ a | a <- zip xPosList [0..], fst a /= -1]
-	where
-		xPosList = map (findInLine x) m
+findChar :: Char -> MapArray -> (Int, Int)
+findChar x m = fst . head . filter ((==x) . snd) . assocs $ m
 	
-		findInLine :: (Eq a) => a -> [a] -> Int
-		findInLine a r
-			| not (a `elem` r) = -1
-			| otherwise = fst . head $ [ b | b <- zip [0..] r, snd b == a]
+toArray :: [[Char]] -> MapArray
+toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,y) <- range ((0,0),(width - 1, height - 1)) ]
+	where
+		height = length m
+		width = length . head $ m
