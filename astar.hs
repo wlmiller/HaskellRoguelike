@@ -32,27 +32,27 @@ gScore (_,(g,_)) = g
 hScore (_,(_,h)) = h
 fScore pos = (gScore pos) + (hScore pos)
 	
-expandFrontier :: ((Int, Int) -> Float) -> (PosList, PosList) -> (PosList, PosList)
-expandFrontier heuristic (visited, frontier) 
-	| frontier == [] = error "No path to exit!"
-	| hScore lowestHpos == 0 = (lowestHpos:visited, [])
-	| otherwise = expandFrontier heuristic $ expandFrom pos
-	where
-		lowestHpos = head . sortBy (comparing hScore) $ frontier
-		pos = head . sortBy (comparing fScore) $ frontier
-		rest = tail . sortBy (comparing fScore) $ frontier
-		visitedPos = [ fst x | x <- visited ]
-		
-		neighbors (x,y) = 
-			[ ((x+dx, y+dy), (gScore pos + 1.0, heuristic (x+dx, y+dy))) | dx <- [-1..1], dy <- [-1..1] 
-																		, (abs dx) + (abs dy) == 1
-																		, (heuristic (x + dx, y + dy)) /= infinity
-																		, not $ (x + dx, y + dy) `elem` visitedPos ]
-		
-		expandFrom pos = (pos:visited, (neighbors $ fst pos) ++ rest)
- 
 findPath :: ((Int, Int) -> Float) -> (Int, Int) -> (PosList, PosList)
 findPath heuristic entryPos = expandFrontier heuristic ([], [(entryPos, (0.0, heuristic entryPos))])
+	where
+		expandFrontier :: ((Int, Int) -> Float) -> (PosList, PosList) -> (PosList, PosList)
+		expandFrontier heuristic (visited, frontier) 
+			| frontier == [] = error "No path to exit!"
+			| hScore lowestHpos == 0 = (lowestHpos:visited, [])
+			| otherwise = expandFrontier heuristic $ expandFrom pos
+			where
+				lowestHpos = head . sortBy (comparing hScore) $ frontier
+				pos = head . sortBy (comparing fScore) $ frontier
+				rest = tail . sortBy (comparing fScore) $ frontier
+				visitedPos = [ fst x | x <- visited ]
+				
+				neighbors (x,y) = 
+					[ ((x+dx, y+dy), (gScore pos + 1.0, heuristic (x+dx, y+dy))) | dx <- [-1..1], dy <- [-1..1] 
+																				, (abs dx) + (abs dy) == 1
+																				, (heuristic (x + dx, y + dy)) /= infinity
+																				, not $ (x + dx, y + dy) `elem` visitedPos ]
+				
+				expandFrom pos = (pos:visited, (neighbors $ fst pos) ++ rest)
 
 buildPath :: PosList -> Path
 buildPath visitedList = buildPath' visitedList [firstStep]
