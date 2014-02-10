@@ -10,18 +10,16 @@ type MapArray = Array (Int, Int) Char
 main = do
 	handle <- openFile "map.txt" ReadMode
 	inputMap <- hGetContents handle
-	let mapLines = validateMap . lines $ inputMap
-	let mapArray = toArray mapLines
+	let mapArray = toArray . validateMap . lines $ inputMap
 	let exitPos = findChar '$' mapArray
 	let entryPos = findChar '@' mapArray
 	let heuristic = heuristic' mapArray exitPos
 	putStr $ unlines . showPath mapArray $ []
 	putStrLn $ "Entry location: " ++ (show entryPos)
 	putStrLn $ "Exit location:  " ++ (show exitPos) 
-	let allVisited = fst . findPath heuristic $ entryPos
-	let path = buildPath allVisited
+	let path = buildPath . fst . findPath heuristic $ entryPos
 	putStrLn ""
-	putStrLn $ "Shortest path: " ++ (show $ gScore . head $ allVisited) ++ " units."
+	putStrLn $ "Shortest path: " ++ (show $ fst . snd . last $ path) ++ " units."
 	putStrLn $ unlines . showPath mapArray $ path
 	hClose handle
 
