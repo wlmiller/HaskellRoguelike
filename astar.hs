@@ -10,11 +10,11 @@ type MapArray = Array (Int, Int) Char
 main = do
 	handle <- openFile "map.txt" ReadMode
 	inputMap <- hGetContents handle
-	let mapLines = validateMap . lines $ inputMap	-- It's my understanding that a list of lists is a poor way to do this.  I'd like to switch this out for a 2D array eventually.
+	let mapLines = validateMap . lines $ inputMap
 	let mapArray = toArray mapLines
 	let exitPos = findChar '$' mapArray
 	let entryPos = findChar '@' mapArray
-	let heuristic = heuristic' mapLines exitPos
+	let heuristic = heuristic' mapArray exitPos
 	putStr $ unlines . showPath mapArray $ []
 	putStrLn $ "Entry location: " ++ (show entryPos)
 	putStrLn $ "Exit location:  " ++ (show exitPos) 
@@ -89,9 +89,9 @@ showPath m path = map (map (getChar)) . groupBy (\x y -> ((snd $ fst x) == (snd 
 			where
 				pathChar (x, y) = head [ c | ((x', y'), (_, c)) <- path,  (x, y) == (x', y') ]
  
-heuristic' :: [[Char]] -> (Int, Int) -> (Int, Int) -> Float
-heuristic' m (endX, endY) (x, y)
-	| (m !! y) !! x == '#' = infinity
+heuristic' :: MapArray -> (Int, Int) -> (Int, Int) -> Float
+heuristic' m end@(endX, endY) pos@(x, y)
+	| m ! pos == '#' = infinity
 	| otherwise = fromIntegral $ (abs (x - endX)) + (abs (y - endY))
 	
 validateMap :: [[Char]] -> [[Char]]	
