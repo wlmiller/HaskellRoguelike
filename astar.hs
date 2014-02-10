@@ -22,6 +22,8 @@ main = do
 	putStrLn $ unlines . showPath mapLines $ path
 	hClose handle
 
+infinity = read "Infinity" :: Float
+	
 gScore, hScore, fScore :: (a, (Float, Float)) -> Float
 gScore (_,(g,_)) = g
 hScore (_,(_,h)) = h
@@ -29,6 +31,7 @@ fScore pos = (gScore pos) + (hScore pos)
 	
 expandFrontier :: ((Int, Int) -> Float) -> (PosList, PosList) -> (PosList, PosList)
 expandFrontier heuristic (visited, frontier) 
+	| frontier == [] = error "No path to exit!"
 	| hScore lowestHpos == 0 = (lowestHpos:visited, [])
 	| otherwise = expandFrontier heuristic $ expandFrom pos
 	where
@@ -38,10 +41,9 @@ expandFrontier heuristic (visited, frontier)
 		visitedPos = [ fst x | x <- visited ]
 		
 		neighbors (x,y) = 
-			[ ((x+dx, y+dy), (gScore pos + 1.0, heuristic (x+dx, y+dy))) | dx <- [-1..1] 
-																		, dy <- [-1..1] 
+			[ ((x+dx, y+dy), (gScore pos + 1.0, heuristic (x+dx, y+dy))) | dx <- [-1..1], dy <- [-1..1] 
 																		, (abs dx) + (abs dy) == 1
-																		--, heuristic (x+dx,y+dy) /= read "Infinity"
+																		, (heuristic (x + dx, y + dy)) /= infinity
 																		, not $ (x + dx, y + dy) `elem` visitedPos ]
 		
 		expandFrom pos = (pos:visited, (neighbors $ fst pos) ++ rest)
@@ -90,7 +92,7 @@ showPath m path = map (map (getChar)) indexMap
  
 heuristic' :: [[Char]] -> (Int, Int) -> (Int, Int) -> Float
 heuristic' m (endX, endY) (x, y)
-	| (m !! y) !! x == '#' = read "Infinity"
+	| (m !! y) !! x == '#' = infinity
 	| otherwise = fromIntegral $ (abs (x - endX)) + (abs (y - endY))
 	
 validateMap :: [[Char]] -> [[Char]]	
