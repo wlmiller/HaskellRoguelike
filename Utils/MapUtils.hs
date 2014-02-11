@@ -82,10 +82,10 @@ showMap m playerPos@(px, py) sightDist r = do
 				putChar x
 				
 visible :: (Int, Int) -> (Int, Int) -> MapArray -> Int -> Bool
-visible (x, y) pPos@(px, py) m sightDist
+visible (x, y) pPos@(px, py) mapArray sightDist
 	| (dx > sightDist) || (dy > sightDist) = False
 	| (fromIntegral dx)**2 + (fromIntegral dy)**2 > (fromIntegral sightDist)**2 = False
-	| otherwise = not $ elem '#' . map (\(x,y) -> m ! (x,y)) . takeWhile (/=pPos) . path (balancedWord p q 0) $ (x, y)
+	| otherwise = not $ elem '#' . map (mapArray !) . takeWhile (/=pPos) . path (balancedWord p q 0) $ (x, y)
 	where
 		dx = px - x
 		dy = py - y
