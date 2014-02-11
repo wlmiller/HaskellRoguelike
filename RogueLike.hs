@@ -4,8 +4,8 @@ import Data.Array
 import Data.List
 import Data.Ord
 import Control.Monad
+import Utils.MapUtils
 
-type MapArray = Array (Int, Int) Char
 data Refresh = Initial | Refresh deriving (Eq)
 
 sightDist = 10
@@ -13,7 +13,7 @@ sightDist = 10
 main = do
 	handle <- openFile "map.txt" ReadMode
 	inputMap <- hGetContents handle
-	let mapArray = toArray . lines $ inputMap
+	let mapArray = readMap inputMap
 	let playerPos = findChar '>' mapArray
 	clearScreen
 	showMap mapArray playerPos Initial
