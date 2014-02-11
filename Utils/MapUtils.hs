@@ -85,7 +85,7 @@ visible :: (Int, Int) -> (Int, Int) -> MapArray -> Int -> Bool
 visible (x, y) pPos@(px, py) m sightDist
 	| (dx > sightDist) || (dy > sightDist) = False
 	| (fromIntegral dx)**2 + (fromIntegral dy)**2 > (fromIntegral sightDist)**2 = False
-	| otherwise = (length . filter (/= '.') . map (\(x,y) -> m ! (x,y)) . takeWhile (/=pPos) . path (balancedWord p q 0) $ (x, y)) == 0
+	| otherwise = not $ elem '#' . map (\(x,y) -> m ! (x,y)) . takeWhile (/=pPos) . path (balancedWord p q 0) $ (x, y)
 	where
 		dx = px - x
 		dy = py - y
