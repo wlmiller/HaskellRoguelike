@@ -55,23 +55,21 @@ toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,
 		width = length . head $ m
 		
 -- Display the map, including line-of-sight
-showMap :: State -> IO ()
+showMap :: State -> IO State
 showMap state = do 
 	hideCursor
-	setCursorPosition py px
-	setSGR 	[ SetConsoleIntensity BoldIntensity
-			, SetColor Foreground Vivid White ]
-	putChar '@'
 	mapM_ (\v@((x,y),_) -> if refreshCell (x,y) then showChar v else return ()) . assocs $ m
 	setCursorPosition 30 0
 	setSGR 	[ SetConsoleIntensity BoldIntensity
 			, SetColor Foreground Vivid White ]
 	showCursor
+	return state { seenList = nub [ x | (x,c) <- assocs m, (visible x playerPos m sightDist) && (isWall x m) ]++sList }
 	where
 		playerPos@(px, py) = pPos $ sPlayer state
 		m = sMap state
+		sList = seenList state
 		
-		refreshCell (x,y) = (abs (x-px) <= (sightDist + 1)) && (abs(y-py) <= (sightDist + 1))
+		refreshCell (x,y) = (x-px)^2 + (y-py)^2 < (sightDist + 2)^2
 	
 		showChar (p@(c,r), x)
 			| p == playerPos = do 
@@ -85,20 +83,29 @@ showMap state = do
 						, SetColor Foreground Vivid Black ]
 				if (visible p playerPos m sightDist) then putChar '.' else putChar ' '
 			| otherwise = do
-				setSGR 	[ SetConsoleIntensity BoldIntensity
-						, SetColor Foreground Vivid White ]
 				setCursorPosition r c
-				putChar x
+				if (visible p playerPos m sightDist) 
+					then do
+						setSGR 	[ SetConsoleIntensity BoldIntensity
+							, SetColor Foreground Vivid White ]
+						putChar x 
+					else if p `elem` sList
+						then do 
+							setSGR 	[ SetConsoleIntensity FaintIntensity
+								, SetColor Foreground Vivid Black ]
+							putChar x
+						else
+							putChar ' '
 				
 -- Check if a position is visible from the player
-visible :: (Int, Int) -> (Int, Int) -> MapArray -> Int -> Bool
-visible (x, y) pPos@(px, py) mapArray sightDist
+visible :: Coord -> Coord -> MapArray -> Int -> Bool
+visible pos@(x, y) pPos@(px, py) mapArray sightDist
 	| (dx > sightDist) || (dy > sightDist) = False
 	| (fromIntegral dx)**2 + (fromIntegral dy)**2 > (fromIntegral sightDist)**2 = False
-	| otherwise = not $ elem '#' . map (mapArray !) . takeWhile (/=pPos) . path (balancedWord p q 0) $ (x, y)
+	| otherwise = not $ elem '#' . map (mapArray !) . takeWhile (/=pos) . path (balancedWord p q 0) $ (px, py)
 	where
-		dx = px - x
-		dy = py - y
+		dx = x - px
+		dy = y - py
 		
 		xyStep b (x', y') = (x' + signum dx, y' + signum dy * b)
 		yxStep b (x', y') = (x' + signum dx * b, y' + signum dy)

@@ -23,15 +23,10 @@ main = do
 	where 
 	
 mainLoop state = do
-	showMap state
-	input <- getInput
-	putStr $ show (inputToCoord input)
-	handleMove state . inputToCoord $ input
-			
-getInput = do
+	state <- showMap state
 	char <- getChar
-	return char
-		
+	handleMove state . inputToCoord $ char
+
 handleMove state dir
 	| isWall newCoord mapArray = mainLoop state
 	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }
