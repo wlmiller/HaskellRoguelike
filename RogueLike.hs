@@ -6,6 +6,7 @@ import Utils.MapUtils
 sightDist = 10
 
 main = do
+	hSetBuffering stdin NoBuffering  -- Doesn't actually work on Windows!
 	handle <- openFile "map.txt" ReadMode
 	inputMap <- hGetContents handle
 	let mapArray = readMap inputMap
@@ -14,7 +15,6 @@ main = do
 	showMap mapArray playerPos sightDist True
 	loop playerPos mapArray
 	where loop pos@(x,y) m = do
-		hSetBuffering stdout (BlockBuffering $ Just 10000)
 		showMap m pos sightDist False
 		input <- getChar
 		let (x', y') = case input of

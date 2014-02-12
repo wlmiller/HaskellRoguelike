@@ -56,6 +56,7 @@ toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,
 -- Display the map, including line-of-sight
 showMap :: MapArray -> (Int, Int) -> Int -> Bool -> IO ()
 showMap m playerPos@(px, py) sightDist r = do 
+	hideCursor
 	setCursorPosition py px
 	setSGR 	[ SetConsoleIntensity BoldIntensity
 			, SetColor Foreground Vivid Blue ]
@@ -64,6 +65,7 @@ showMap m playerPos@(px, py) sightDist r = do
 	setCursorPosition 30 0
 	setSGR 	[ SetConsoleIntensity BoldIntensity
 			, SetColor Foreground Vivid White ]
+	showCursor
 	where
 		refreshCell (x,y)
 			| r = (abs (x-px) <= (sightDist + 1)) && (abs(y-py) <= (sightDist + 1))
