@@ -18,9 +18,7 @@ main = do
 	let player = Player { pPos = (findChar '>' mapArray) }
 	let state = State { sPlayer = player, sMap = mapArray, seenList = [] }
 	clearScreen
-	showMap state
 	mainLoop state
-	where 
 	
 -- The main game loop.
 mainLoop :: State -> IO ()
