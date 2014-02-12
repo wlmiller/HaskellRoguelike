@@ -22,19 +22,25 @@ main = do
 	mainLoop state
 	where 
 	
+-- The main game loop.
+mainLoop :: State -> IO ()
 mainLoop state = do
 	state <- showMap state
 	char <- getChar
 	handleMove state . inputToCoord $ char
 
+-- Updates the state based on the user's direction input.
+handleMove :: State -> Coord -> IO ()
 handleMove state dir
 	| isWall newCoord mapArray = mainLoop state
 	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }
 	where
 		player = sPlayer state
 		oldCoord = pPos player
-		newCoord = addtuples oldCoord $ dir
+		newCoord = addCoords oldCoord $ dir
 		
 		mapArray = sMap state
 		
-addtuples (x,y) (x', y') = (x + x', y + y')
+-- Add two coordinates together.
+addCoords :: Coord -> Coord -> Coord
+addCoords (x,y) (x', y') = (x + x', y + y')
