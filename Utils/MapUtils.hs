@@ -12,9 +12,11 @@ import System.Console.ANSI
 	
 type MapArray = Array (Int, Int) Char
 
+-- Validate the map and convert it to an array.
 readMap :: String -> MapArray
 readMap = (toArray . validateMap . lines)
 
+-- Check that the map has all the proper elements and is fully enclosed
 validateMap :: [[Char]] -> [[Char]]	
 validateMap m 
 	| (length . concat . map (filter (=='<')) $ m) /= 1 = error "Must have exactly one exit ('<')!"
@@ -39,16 +41,19 @@ validateMap m
 				then [ reverse ('#':(reverse xs)) | xs <- m''' ]
 				else m'''
 		in m''''
-		
+
+-- Find a specific character in the map		
 findChar :: Char -> MapArray -> (Int, Int)
 findChar x m = fst . head . filter ((==x) . snd) . assocs $ m
-	
+
+-- Convert the map from a list of lists to an array	
 toArray :: [[Char]] -> MapArray
 toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,y) <- range ((0,0),(width - 1, height - 1)) ]
 	where
 		height = length m
 		width = length . head $ m
 		
+-- Display the map, including line-of-sight
 showMap :: MapArray -> (Int, Int) -> Int -> Bool -> IO ()
 showMap m playerPos@(px, py) sightDist r = do 
 	setCursorPosition py px
@@ -81,6 +86,7 @@ showMap m playerPos@(px, py) sightDist r = do
 				setCursorPosition r c
 				putChar x
 				
+-- Check if a position is visible from the player
 visible :: (Int, Int) -> (Int, Int) -> MapArray -> Int -> Bool
 visible (x, y) pPos@(px, py) mapArray sightDist
 	| (dx > sightDist) || (dy > sightDist) = False

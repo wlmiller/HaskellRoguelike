@@ -92,36 +92,3 @@ heuristic' m end@(endX, endY) pos@(x, y)
 	| m ! pos == '#' = infinity
 	| otherwise = fromIntegral $ (abs (x - endX)) + (abs (y - endY))
 	
-validateMap :: [[Char]] -> [[Char]]	
-validateMap m 
-	| (length . concat . map (filter (=='$')) $ m) /= 1 = error "Must have exactly one exit ('$')!"
-	| (length . concat . map (filter (=='@')) $ m) /= 1 = error "Must have exactly one entrance ('@')!"
-	| (length . concat . map (filter (not . flip(elem) "#.$@")) $ m) > 0 = error "Unexpected symbol!  Only '#', '.', '$', and '@' allowed."
-	| (length . nub $ map (length) m) > 1 = error "Map must be rectangular!"
-	| otherwise =	-- Make sure there's a wall around the whole map.  This way there's no need to worry about running off the map later.
-		let
-			width = length . head $ m
-			m' = if (length . filter (/= '#') . head $ m) > 0 
-				then (replicate width '#'):m 
-				else m
-			m'' = if (length . filter (/= '#') . last $ m') > 0 
-				then reverse ((replicate width '#'):(reverse m')) 
-				else m'
-		
-			m''' = if length [ head xs | xs <- m'', head xs /= '#'] > 0 
-				then [ '#':xs | xs <- m'' ]
-				else m''
-					
-			m'''' = if length [ last xs | xs <- m''', last xs /= '#'] > 0 
-				then [ reverse ('#':(reverse xs)) | xs <- m''' ]
-				else m'''
-		in m''''
-		
-findChar :: Char -> MapArray -> (Int, Int)
-findChar x m = fst . head . filter ((==x) . snd) . assocs $ m
-	
-toArray :: [[Char]] -> MapArray
-toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,y) <- range ((0,0),(width - 1, height - 1)) ]
-	where
-		height = length m
-		width = length . head $ m
