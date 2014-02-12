@@ -4,6 +4,8 @@ import Data.Array
 import Utils.MapUtils
 import Utils.DataTypes
 
+-- Translate the input character into a delta coordinate.
+inputToCoord :: Char -> (Int, Int)
 inputToCoord 'w' = (0, -1)
 inputToCoord 's' = (0, 1)
 inputToCoord 'a' = (-1, 0)
@@ -25,7 +27,19 @@ mainLoop :: State -> IO ()
 mainLoop state = do
 	state <- showMap state
 	char <- getChar
-	handleMove state . inputToCoord $ char
+	handleInput state char
+	
+-- Handle user input.
+handleInput :: State -> Char -> IO ()
+handleInput _ 'p' = exit  -- Using 'p' for qut because 'q' is so close to WASD.
+handleInput state x = handleMove state . inputToCoord $ x
+
+-- Exit the game.
+exit :: IO()
+exit = do
+	clearScreen
+	setCursorPosition 30 0
+	putStrLn "Thanks for playing!\n"
 
 -- Updates the state based on the user's direction input.
 handleMove :: State -> Coord -> IO ()
