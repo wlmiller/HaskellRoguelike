@@ -60,42 +60,41 @@ showMap state = do
 	hideCursor
 	mapM_ (\v@((x,y),_) -> if refreshCell (x,y) then showChar v else return ()) . assocs $ m
 	setCursorPosition 30 0
-	setSGR 	[ SetConsoleIntensity BoldIntensity
-			, SetColor Foreground Vivid White ]
 	showCursor
-	return state { seenList = nub [ x | (x,c) <- assocs m, (visible x playerPos m sightDist) && (isWall x m) ]++sList }
+	return state { seenList = nub [ x | (x,c) <- assocs m, (visible x playerPos m sightDist) && (isPersistent x m) ]++sList }
 	where
 		playerPos@(px, py) = pPos $ sPlayer state
 		m = sMap state
 		sList = seenList state
-		
 		refreshCell (x,y) = (x-px)^2 + (y-py)^2 < (sightDist + 2)^2
-	
 		showChar (p@(c,r), x)
 			| p == playerPos = do 
 				setCursorPosition r c
 				setSGR 	[ SetConsoleIntensity BoldIntensity
-						, SetColor Foreground Vivid White ]
+						, SetColor Foreground Vivid Green ]
 				putChar '@'
+				setSGR [ Reset ]
 			| x == '.' = do
 				setCursorPosition r c
 				setSGR 	[ SetConsoleIntensity BoldIntensity
 						, SetColor Foreground Vivid Black ]
 				if (visible p playerPos m sightDist) then putChar '.' else putChar ' '
+				setSGR [ Reset ]
 			| otherwise = do
 				setCursorPosition r c
 				if (visible p playerPos m sightDist) 
 					then do
 						setSGR 	[ SetConsoleIntensity BoldIntensity
-							, SetColor Foreground Vivid White ]
+								, SetColor Foreground Vivid White ]
 						putChar x 
+						setSGR [ Reset ]
 					else if p `elem` sList
 						then do 
 							setSGR 	[ SetConsoleIntensity FaintIntensity
-								, SetColor Foreground Vivid Black ]
+									, SetColor Foreground Vivid Black ]
 							putChar x
-						else
-							putChar ' '
+							setSGR [ Reset ]
+						else return ()
 				
 -- Check if a position is visible from the player
 visible :: Coord -> Coord -> MapArray -> Int -> Bool
@@ -114,7 +113,7 @@ visible pos@(x, y) pPos@(px, py) mapArray sightDist
 			| abs dx > abs dy 	= (abs dy, abs dx, xyStep)
 			| otherwise 		= (abs dx, abs dy, yxStep)
 		
-		path p xy = xy : path (tail p) (step (head p) xy)
+		path (p:ps) xy = xy:(path ps $ step p xy)
 		
 		balancedWord p' q' eps
 			| eps + p' < q' 	= 0 : balancedWord p' q' (eps + p')
@@ -123,3 +122,7 @@ visible pos@(x, y) pPos@(px, py) mapArray sightDist
 -- Check if the given coordinate is a wall
 isWall :: Coord -> MapArray -> Bool
 isWall c m = m ! c == '#'
+
+-- Check if the given coordinate is something that should persits
+isPersistent :: Coord -> MapArray -> Bool
+isPersistent c m = m ! c `elem` "><#"
