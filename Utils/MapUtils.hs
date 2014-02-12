@@ -4,13 +4,14 @@ module Utils.MapUtils
 	, findChar
 	, showMap
 	, visible
-	) where
+	, isWall) where
 
 import Data.Array
 import Data.List
 import System.Console.ANSI
-	
-type MapArray = Array (Int, Int) Char
+import Utils.DataTypes
+
+sightDist = 10  -- Hard-coding for now.
 
 -- Validate the map and convert it to an array.
 readMap :: String -> MapArray
@@ -54,8 +55,8 @@ toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,
 		width = length . head $ m
 		
 -- Display the map, including line-of-sight
-showMap :: MapArray -> (Int, Int) -> Int -> Bool -> IO ()
-showMap m playerPos@(px, py) sightDist r = do 
+showMap :: State -> IO ()
+showMap state = do 
 	hideCursor
 	setCursorPosition py px
 	setSGR 	[ SetConsoleIntensity BoldIntensity
@@ -67,9 +68,10 @@ showMap m playerPos@(px, py) sightDist r = do
 			, SetColor Foreground Vivid White ]
 	showCursor
 	where
-		refreshCell (x,y)
-			| r = (abs (x-px) <= (sightDist + 1)) && (abs(y-py) <= (sightDist + 1))
-			| otherwise = True
+		playerPos@(px, py) = pPos $ sPlayer state
+		m = sMap state
+		
+		refreshCell (x,y) = (abs (x-px) <= (sightDist + 1)) && (abs(y-py) <= (sightDist + 1))
 	
 		showChar (p@(c,r), x)
 			| p == playerPos = do 
@@ -110,3 +112,7 @@ visible (x, y) pPos@(px, py) mapArray sightDist
 		balancedWord p' q' eps
 			| eps + p' < q' 	= 0 : balancedWord p' q' (eps + p')
 			| otherwise			= 1 : balancedWord p' q' (eps + p' - q')
+			
+-- Check if the given coordinate is a wall
+isWall :: Coord -> MapArray -> Bool
+isWall c m = m ! c == '#'
