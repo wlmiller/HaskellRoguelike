@@ -59,7 +59,7 @@ showMap m playerPos@(px, py) sightDist r = do
 	hideCursor
 	setCursorPosition py px
 	setSGR 	[ SetConsoleIntensity BoldIntensity
-			, SetColor Foreground Vivid Blue ]
+			, SetColor Foreground Vivid White ]
 	putChar '@'
 	mapM_ (\v@((x,y),_) -> if refreshCell (x,y) then showChar v else return ()) . assocs $ m
 	setCursorPosition 30 0
@@ -75,7 +75,7 @@ showMap m playerPos@(px, py) sightDist r = do
 			| p == playerPos = do 
 				setCursorPosition r c
 				setSGR 	[ SetConsoleIntensity BoldIntensity
-						, SetColor Foreground Vivid Blue ]
+						, SetColor Foreground Vivid White ]
 				putChar '@'
 			| x == '.' = do
 				setCursorPosition r c
