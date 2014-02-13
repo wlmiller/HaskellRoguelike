@@ -5,7 +5,8 @@ module Utils.MapUtils
 	, findChar
 	, showMap
 	, visible
-	, isWall) where
+	, isWall
+	, isExit) where
 
 import Data.Array
 import Data.List
@@ -126,9 +127,13 @@ visible pos@(x, y) pPos@(px, py) mapArray sightDist
 			| eps + p' < q' 	= 0 : balancedWord p' q' (eps + p')
 			| otherwise			= 1 : balancedWord p' q' (eps + p' - q')
 			
--- Check if the given coordinate is a wall
+-- Check if the given coordinate is a wall.
 isWall :: Coord -> MapArray -> Bool
 isWall c m = m ! c == '#'
+
+-- Check if the given coordinate is an exit.
+isExit :: Coord -> MapArray -> Bool
+isExit c m = m ! c == '<'
 
 -- Check if the given coordinate is something that should persits
 isPersistent :: Coord -> MapArray -> Bool

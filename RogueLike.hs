@@ -20,7 +20,7 @@ main = do
 	g <- getStdGen
 	let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
 	let player = Player { pPos = (findChar '>' mapArray) }
-	let state = State { sPlayer = player, sMap = mapArray, seenList = [] }
+	let state = State { sPlayer = player, sMap = mapArray, seenList = [], randGen = g }
 	clearScreen
 	mainLoop state
 	
@@ -47,6 +47,14 @@ exit = do
 handleMove :: Coord -> State -> IO ()
 handleMove dir state
 	| isWall newCoord mapArray = mainLoop state
+	| isExit newCoord mapArray = do
+		showMap state { sPlayer = player {pPos = newCoord} }
+		let g = randGen state
+		let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
+		let player = Player { pPos = (findChar '>' mapArray) }
+		let state = State { sPlayer = player, sMap = mapArray, seenList = [], randGen = g' }
+		clearScreen
+		mainLoop state
 	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }
 	where
 		player = sPlayer state

@@ -5,6 +5,7 @@ module Utils.DataTypes
 	, Coord) where
 	
 import Data.Array
+import System.Random
 
 type MapArray = Array (Int, Int) Char
 	
@@ -14,4 +15,5 @@ data Player = Player { pPos :: Coord }
 
 data State = State	{ sPlayer :: Player
 					, sMap :: MapArray
-					, seenList :: [Coord] }
+					, seenList :: [Coord]
+					, randGen :: StdGen }
