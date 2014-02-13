@@ -79,6 +79,11 @@ showMap state = do
 				setCursorPosition r c
 				setSGR 	[ SetConsoleIntensity BoldIntensity
 						, SetColor Foreground Vivid Black ]
+				let distSq = (c-px)^2 + (r-py)^2
+				-- if (distSq > sightDist^2) || (distSq <= (sightDist - 1)^2) then putChar ' '
+					-- else if (visible p playerPos m sightDist) then putChar '.' else putChar ' '
+				-- The above shows '.'s only at the edge of vision.  It makes longer sight distances feasible,
+				-- but I think the "spotlight" effect is much cooler.
 				if (visible p playerPos m sightDist) then putChar '.' else putChar ' '
 				setSGR [ Reset ]
 			| otherwise = do
