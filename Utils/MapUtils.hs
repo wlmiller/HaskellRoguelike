@@ -1,5 +1,6 @@
 module Utils.MapUtils 	
 	(MapArray
+	, toArray
 	, readMap
 	, findChar
 	, showMap

@@ -35,7 +35,7 @@ selectOpen m g
 		(x', g') = randomR (1, xSize - 2) g
 		(y', g'') = randomR (1, ySize - 2) g'
 	
--- Randomly generate a map.  This is done by carving out squares, 
+-- Randomly generate a map.  This is done by carving out rectangles, 
 -- always starting from a carved-out cell to ensure connectedness.
 -- This is quite slow and I'd like to come up with a faster way,
 -- but I like the result.

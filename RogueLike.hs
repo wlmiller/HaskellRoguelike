@@ -18,8 +18,7 @@ inputToCoord _   = (0, 0)
 main = do
 	hSetBuffering stdin NoBuffering  -- Doesn't actually work on Windows!
 	g <- getStdGen
-	let (mapList, g') = createLevel g
-	let mapArray = readMap mapList
+	let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
 	let player = Player { pPos = (findChar '>' mapArray) }
 	let state = State { sPlayer = player, sMap = mapArray, seenList = [] }
 	clearScreen
