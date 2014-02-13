@@ -24,7 +24,13 @@ createLevel g = (addChar '<' startPos . addChar '>' endPos $ m, g''')
 
 -- Insert a character at a given position in the map.
 addChar :: a -> (Int, Int) -> [[a]] -> [[a]]
-addChar char pos m = [ [ c | x <- [0..(length r - 1)], let c = if (x,y) == pos then char else r !! x ] | y <- [0..(length m-1)], let r = m !! y ]
+addChar char (x,y) m = aboveRows ++ ([ leftCells ++ (char:rightCells) ]) ++ belowRows
+	where
+		aboveRows = take (y-1) m
+		belowRows = drop y m
+		row = m !! y
+		leftCells = take (x-1) row
+		rightCells = drop x row
 		
 -- Randomly select an open cell.
 selectOpen :: (RandomGen g) => [[Char]] -> g -> ((Int, Int), g)
