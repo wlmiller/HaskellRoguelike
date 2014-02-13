@@ -1,8 +1,11 @@
 import System.IO
 import System.Console.ANSI
+import System.Random
 import Data.Array
+
 import Utils.MapUtils
 import Utils.DataTypes
+import Utils.RandomMap
 
 -- Translate the input character into a delta coordinate.
 inputToCoord :: Char -> (Int, Int)
@@ -14,9 +17,9 @@ inputToCoord _   = (0, 0)
 
 main = do
 	hSetBuffering stdin NoBuffering  -- Doesn't actually work on Windows!
-	handle <- openFile "map.txt" ReadMode
-	inputMap <- hGetContents handle
-	let mapArray = readMap inputMap
+	g <- getStdGen
+	let (mapList, g') = createLevel g
+	let mapArray = readMap mapList
 	let player = Player { pPos = (findChar '>' mapArray) }
 	let state = State { sPlayer = player, sMap = mapArray, seenList = [] }
 	clearScreen
@@ -27,12 +30,12 @@ mainLoop :: State -> IO ()
 mainLoop state = do
 	state <- showMap state
 	char <- getChar
-	handleInput state char
+	handleInput char state
 	
 -- Handle user input.
-handleInput :: State -> Char -> IO ()
-handleInput _ 'p' = exit  -- Using 'p' for qut because 'q' is so close to WASD.
-handleInput state x = handleMove state . inputToCoord $ x
+handleInput :: Char -> State -> IO ()
+handleInput 'p' _ = exit  -- Using 'p' for quit because 'q' is so close to WASD.
+handleInput x state = handleMove (inputToCoord x) state 
 
 -- Exit the game.
 exit :: IO()
@@ -42,8 +45,8 @@ exit = do
 	putStrLn "Thanks for playing!\n"
 
 -- Updates the state based on the user's direction input.
-handleMove :: State -> Coord -> IO ()
-handleMove state dir
+handleMove :: Coord -> State -> IO ()
+handleMove dir state
 	| isWall newCoord mapArray = mainLoop state
 	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }
 	where

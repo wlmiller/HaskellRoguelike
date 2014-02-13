@@ -14,8 +14,8 @@ import Utils.DataTypes
 sightDist = 10  -- Hard-coding for now.
 
 -- Validate the map and convert it to an array.
-readMap :: String -> MapArray
-readMap = (toArray . validateMap . lines)
+readMap :: [[Char]] -> MapArray
+readMap = (toArray . validateMap)
 
 -- Check that the map has all the proper elements and is fully enclosed
 validateMap :: [[Char]] -> [[Char]]	
@@ -71,7 +71,7 @@ showMap state = do
 			| p == playerPos = do 
 				setCursorPosition r c
 				setSGR 	[ SetConsoleIntensity BoldIntensity
-						, SetColor Foreground Vivid Green ]
+						, SetColor Foreground Vivid Cyan ]
 				putChar '@'
 				setSGR [ Reset ]
 			| x == '.' = do
