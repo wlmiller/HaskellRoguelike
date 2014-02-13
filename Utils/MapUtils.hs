@@ -97,7 +97,8 @@ showMap state = do
 							setSGR [ Reset ]
 						else return ()
 				
--- Check if a position is visible from the player
+-- Check if a position is visible from the player.
+-- I'm convinced I can think of a faster way to handle this.
 visible :: Coord -> Coord -> MapArray -> Int -> Bool
 visible pos@(x, y) pPos@(px, py) mapArray sightDist
 	| (dx > sightDist) || (dy > sightDist) = False
