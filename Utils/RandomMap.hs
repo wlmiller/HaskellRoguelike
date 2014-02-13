@@ -13,6 +13,8 @@ ySize = 25
 roomX = (-15,15)
 roomY = (-5,5)
 
+-- Create a level with a random map plus entry and exit points.  Eventually, add other stuff.
+createLevel :: (RandomGen g) => g -> ([[Char]], g)
 createLevel g = (addChar '<' startPos . addChar '>' endPos $ m, g''')
 	where
 		emptyMap = replicate ySize . replicate xSize $ '#'
@@ -20,9 +22,12 @@ createLevel g = (addChar '<' startPos . addChar '>' endPos $ m, g''')
 		(startPos, g'') = selectOpen m g'
 		(endPos, g''') = selectOpen m g''
 
+-- Insert a character at a given position in the map.
 addChar :: a -> (Int, Int) -> [[a]] -> [[a]]
 addChar char pos m = [ [ c | x <- [0..(length r - 1)], let c = if (x,y) == pos then char else r !! x ] | y <- [0..(length m-1)], let r = m !! y ]
 		
+-- Randomly select an open cell.
+selectOpen :: (RandomGen g) => [[Char]] -> g -> ((Int, Int), g)
 selectOpen m g
 	| m !! y' !! x' == '.' = ((x', y'),g'')
 	|otherwise = selectOpen m g''
@@ -30,6 +35,10 @@ selectOpen m g
 		(x', g') = randomR (1, xSize - 2) g
 		(y', g'') = randomR (1, ySize - 2) g'
 	
+-- Randomly generate a map.  This is done by carving out squares, 
+-- always starting from a carved-out cell to ensure connectedness.
+-- This is quite slow and I'd like to come up with a faster way,
+-- but I like the result.
 generateMap :: (RandomGen g) => [[Char]] -> g -> ([[Char]], g)
 generateMap m g
 	| not $ ((x + deltaX) `elem` [1..(xSize-2)]) && ((y + deltaY) `elem` [1..(ySize-2)]) = generateMap m g'''''
@@ -66,5 +75,6 @@ generateMap m g
 		allCount = xSize*ySize
 		openFrac = (fromIntegral openCount)/(fromIntegral allCount)
 		
+-- Add two coordinates together.
 addCoords :: Coord -> Coord -> Coord
 addCoords (x,y) (x', y') = (x + x', y + y')
