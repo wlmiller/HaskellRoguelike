@@ -53,6 +53,7 @@ generateMap m g
 	where
 		((x,y), g''') = selectCorner m g
 			where
+				selectCorner :: (RandGen g) => [[Char]] -> g -> ((Int, Int), g)
 				selectCorner m g
 					| not $ '.' `elem` (concat m) = ((xSize `div` 2, ySize `div` 2),g'')
 					| (m !! y' !! x' == '.') && ((length . filter (=='#') $ (neighbors (x', y'))) > 1) = ((x', y'),g'')
@@ -65,18 +66,21 @@ generateMap m g
 
 		(deltaX, g'''') = randomR roomX g'''
 		(deltaY, g''''') = randomR roomY g''''
-		newMap = 	[ 	
-						[ c | 	x <- [0..(length r - 1)]
-							, let c = if inRange (x,y) then '.' else r !! x ] 
-						| y <- [0..(length m-1)], let r = m !! y ]
+		newMap = aboveRows ++ (map (\r -> (leftCells r) ++ (replicate num '.') ++ (rightCells r)) rows) ++ belowRows
 			where
 				leftX = minimum [x, x + deltaX]
 				rightX = maximum [x, x + deltaX]
 				topY = minimum [y, y + deltaY]
 				bottomY = maximum [y, y + deltaY]
-				xRange = [leftX..rightX]
-				yRange = [topY..bottomY]
-				inRange (x, y) = (x `elem` xRange) && (y `elem` yRange)
+				
+				aboveRows = take (topY - 1) m
+				belowRows = drop (bottomY) m
+				rows = drop (topY - 1) . take bottomY $ m
+				
+				leftCells = take (leftX - 1)
+				rightCells = drop rightX
+				num = rightX - leftX + 1
+				
 		openCount = length . filter (=='.') . concat $ newMap
 		allCount = xSize*ySize
 		openFrac = (fromIntegral openCount)/(fromIntegral allCount)
