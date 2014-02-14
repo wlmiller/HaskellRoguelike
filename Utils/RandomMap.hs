@@ -26,11 +26,11 @@ createLevel g = (addChar '<' startPos . addChar '>' endPos $ m, g''')
 addChar :: a -> (Int, Int) -> [[a]] -> [[a]]
 addChar char (x,y) m = aboveRows ++ ([ leftCells ++ (char:rightCells) ]) ++ belowRows
 	where
-		aboveRows = take (y-1) m
-		belowRows = drop y m
+		aboveRows = take y m
+		belowRows = drop (y+1) m
 		row = m !! y
-		leftCells = take (x-1) row
-		rightCells = drop x row
+		leftCells = take x row
+		rightCells = drop (x+1) row
 		
 -- Randomly select an open cell.
 selectOpen :: (RandomGen g) => [[Char]] -> g -> ((Int, Int), g)
@@ -47,38 +47,38 @@ selectOpen m g
 -- but I like the result.
 generateMap :: (RandomGen g) => [[Char]] -> g -> ([[Char]], g)
 generateMap m g
-	| not $ ((x + deltaX) `elem` [1..(xSize-2)]) && ((y + deltaY) `elem` [1..(ySize-2)]) = generateMap m g'''''
+	| not $ ((x + dx) `elem` [1..(xSize-2)]) && ((y + dy) `elem` [1..(ySize-2)]) = generateMap m g'''''
 	| openFrac < 0.5 = generateMap newMap g'''''
 	| otherwise = (newMap, g''''')
 	where
 		((x,y), g''') = selectCorner m g
 			where
-				selectCorner :: (RandGen g) => [[Char]] -> g -> ((Int, Int), g)
+				selectCorner :: (RandomGen g) => [[Char]] -> g -> ((Int, Int), g)
 				selectCorner m g
 					| not $ '.' `elem` (concat m) = ((xSize `div` 2, ySize `div` 2),g'')
 					| (m !! y' !! x' == '.') && ((length . filter (=='#') $ (neighbors (x', y'))) > 1) = ((x', y'),g'')
 					| otherwise = selectCorner m g''
 					where
-						(x',g') = randomR (1,xSize - 2) g
+						(x',g') = randomR (1, xSize - 2) g
 						(y', g'') = randomR (1, ySize - 2) g'
 						
 						neighbors (a, b) = [ m !! (b+c) !! (a+d) | c <- [-1..1], d <- [-1..1], (abs c) + (abs d) == 1 ]
 
-		(deltaX, g'''') = randomR roomX g'''
-		(deltaY, g''''') = randomR roomY g''''
+		(dx, g'''') = randomR roomX g'''
+		(dy, g''''') = randomR roomY g''''
 		newMap = aboveRows ++ (map (\r -> (leftCells r) ++ (replicate num '.') ++ (rightCells r)) rows) ++ belowRows
 			where
-				leftX = minimum [x, x + deltaX]
-				rightX = maximum [x, x + deltaX]
-				topY = minimum [y, y + deltaY]
-				bottomY = maximum [y, y + deltaY]
+				leftX = minimum [x, x + dx]
+				rightX = maximum [x, x + dx]
+				topY = minimum [y, y + dy]
+				bottomY = maximum [y, y + dy]
 				
-				aboveRows = take (topY - 1) m
-				belowRows = drop (bottomY) m
-				rows = drop (topY - 1) . take bottomY $ m
+				aboveRows = take topY m
+				belowRows = drop (bottomY + 1) m
+				rows = drop (topY) . take (bottomY + 1) $ m
 				
-				leftCells = take (leftX - 1)
-				rightCells = drop rightX
+				leftCells = take leftX
+				rightCells = drop (rightX + 1)
 				num = rightX - leftX + 1
 				
 		openCount = length . filter (=='.') . concat $ newMap
