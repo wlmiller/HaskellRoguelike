@@ -60,9 +60,9 @@ toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,
 showMap :: State -> IO State
 showMap state = do 
 	hideCursor
-	eraseOld (oldPPos,'@')
+	showVisible (oldPPos, m ! oldPPos )
 	showPlayer
-	mapM_ showVisible vList
+	mapM_ showVisible newlyVisible
 	mapM_ eraseOld toErase
 	mapM_ displaySeen sList
 	setCursorPosition 30 0
@@ -85,15 +85,22 @@ showMap state = do
 			putChar '@'
 			setSGR [ Reset ]
 		
-		edgeList = [ (x,y) |	x <- [px - sightDist..px + sightDist]
-								, y <- [py - sightDist..py + sightDist]
-								, (x - px)^2 + (y - py) ^2 <= sightDist^2
-								, (x - px)^2 + (y - py) ^2 > (sightDist-3)^2 ]
+		edgeList = [ (x,y) |	x <- [px - sightDist - 2..px + sightDist + 2]
+								, y <- [py - sightDist - 2..py + sightDist + 2]
+								, fromIntegral ((x - px)^2 + (y - py)^2) <= (fromIntegral sightDist + sqrt 2)**2
+								, (x - px)^2 + (y - py)^2 > (sightDist)^2 ]
 		
-		vList = nub . concat . map (\x -> getVisible x playerPos m sightDist) $ edgeList
+		-- Below, I construct a list of visible cells by shooting lines to the outer radius of visiblity.
+		-- This isn't rigourously correct, but it only noticeably faily when near a wall, so I check
+		--wall visibility explicitly.
+		nearbyWalls = [ v | v@(p,c) <- assocs m, refreshCell p, isWall c]
+		visibleWalls = [ v | v@(p,c) <- nearbyWalls, visible p playerPos m sightDist ]
+		
+		vList = (nub . concat . map (\x -> getVisible x playerPos m sightDist) $ edgeList) ++ visibleWalls
 		sList = [ x | x <- seenList state, not $ x `elem` vList ]
 		oldVList = visibleList state
 		toErase = [ v | v@(_,c) <- oldVList, c == '.', not $ v `elem` vList ]
+		newlyVisible = [ v | v <- vList, not $ v `elem` oldVList ]
 		
 		showSeen (p@(x,y), c) = do
 			setCursorPosition y x
@@ -115,10 +122,10 @@ showMap state = do
 -- Get a list of visible cells along the line from the player to the given cell.
 getVisible :: Coord -> Coord -> MapArray -> Int -> [(Coord, Char)]
 getVisible pos@(x, y) pPos@(px, py) mapArray sightDist = 
-	map (\x -> (x, mapArray ! x)) . reverse $ (head invList):(reverse vList)
+	map (\x -> (x, mapArray ! x)) vList -- . reverse $ (head invList):(reverse vList)
 		where
-			vList = takeWhile (\x -> (x/=pos) && (not $ isWall x mapArray)) . path (balancedWord p q 0) $ (px, py)
-			invList = dropWhile (\x -> (x/=pos) && (not $ isWall x mapArray)) . path (balancedWord p q 0) $ (px, py)
+			vList = takeWhile (\x -> (x/=pos) && (not $ isWall $ mapArray ! x)) . path (balancedWord p q 0) $ (px, py)
+			invList = dropWhile (\x -> (x/=pos) && (not $ isWall $ mapArray ! x)) . path (balancedWord p q 0) $ (px, py)
 		
 			dx = x - px
 			dy = y - py
@@ -160,8 +167,8 @@ visible pos@(x, y) pPos@(px, py) mapArray sightDist
 			| otherwise			= 1 : balancedWord p' q' (eps + p' - q')
 
 -- Check if the given coordinate is a wall.
-isWall :: Coord -> MapArray -> Bool
-isWall c m = m ! c == '#'
+isWall :: Char -> Bool
+isWall c = c == '#'
 
 -- Check if the given coordinate is an exit.
 isExit :: Coord -> MapArray -> Bool

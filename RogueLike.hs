@@ -46,7 +46,7 @@ exit = do
 -- Updates the state based on the user's direction input.
 handleMove :: Coord -> State -> IO ()
 handleMove dir state
-	| isWall newCoord mapArray = mainLoop state
+	| isWall $ mapArray ! newCoord = mainLoop state
 	| isExit newCoord mapArray = do
 		showMap state { sPlayer = player {pPos = newCoord} }
 		let g = randGen state
