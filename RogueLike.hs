@@ -19,8 +19,8 @@ main = do
 	hSetBuffering stdin NoBuffering  -- Doesn't actually work on Windows!
 	g <- getStdGen
 	let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
-	let player = Player { pPos = (findChar '>' mapArray) }
-	let state = State { sPlayer = player, sMap = mapArray, seenList = [], randGen = g }
+	let player = Player { pPos = (findChar '>' mapArray), oldPos = (findChar '>' mapArray) }
+	let state = State { sPlayer = player, sMap = mapArray, seenList = [], visibleList = [], randGen = g }
 	clearScreen
 	mainLoop state
 	
@@ -46,13 +46,13 @@ exit = do
 -- Updates the state based on the user's direction input.
 handleMove :: Coord -> State -> IO ()
 handleMove dir state
-	| isWall newCoord mapArray = mainLoop state
+	| isWall $ mapArray ! newCoord = mainLoop state
 	| isExit newCoord mapArray = do
 		showMap state { sPlayer = player {pPos = newCoord} }
 		let g = randGen state
 		let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
-		let player = Player { pPos = (findChar '>' mapArray) }
-		let state = State { sPlayer = player, sMap = mapArray, seenList = [], randGen = g' }
+		let player = Player { pPos = (findChar '>' mapArray), oldPos = (findChar '>' mapArray) }
+		let state = State { sPlayer = player, sMap = mapArray, seenList = [], visibleList = [], randGen = g' }
 		clearScreen
 		mainLoop state
 	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }

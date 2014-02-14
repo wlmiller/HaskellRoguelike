@@ -11,9 +11,11 @@ type MapArray = Array (Int, Int) Char
 	
 type Coord = (Int, Int)
 
-data Player = Player { pPos :: Coord }
+data Player = Player 	{ pPos :: Coord
+						, oldPos :: Coord }
 
 data State = State	{ sPlayer :: Player
 					, sMap :: MapArray
-					, seenList :: [Coord]
+					, seenList :: [(Coord, Char)]
+					, visibleList :: [(Coord, Char)]
 					, randGen :: StdGen }

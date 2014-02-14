@@ -4,7 +4,7 @@ module Utils.MapUtils
 	, readMap
 	, findChar
 	, showMap
-	, visible
+	, getVisible
 	, isWall
 	, isExit) where
 
@@ -13,7 +13,7 @@ import Data.List
 import System.Console.ANSI
 import Utils.DataTypes
 
-sightDist = 10  -- Hard-coding for now.
+sightDist = 20  -- Hard-coding for now.
 
 -- Validate the map and convert it to an array.
 readMap :: [[Char]] -> MapArray
@@ -60,51 +60,90 @@ toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,
 showMap :: State -> IO State
 showMap state = do 
 	hideCursor
-	mapM_ (\v@((x,y),_) -> if refreshCell (x,y) then showChar v else return ()) . assocs $ m
+	showVisible (oldPPos, m ! oldPPos )
+	showPlayer
+	mapM_ showVisible newlyVisible
+	mapM_ eraseOld toErase
+	mapM_ displaySeen sList
 	setCursorPosition 30 0
 	showCursor
-	return state { seenList = nub [ x | (x,c) <- assocs m, (visible x playerPos m sightDist) && (isPersistent x m) ]++sList }
+	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList, sPlayer =  player { oldPos = playerPos } }
 	where
-		playerPos@(px, py) = pPos $ sPlayer state
+		displaySeen v@(p,c) = if refreshCell p then showSeen v else return()
+		eraseOld ((x,y),_) = do
+			setCursorPosition y x
+			putChar ' '
+	
+		player = sPlayer state
+		playerPos@(px, py) = pPos player
+		oldPPos = oldPos player
 		m = sMap state
-		sList = seenList state
 		refreshCell (x,y) = (x-px)^2 + (y-py)^2 < (sightDist + 2)^2
-		showChar (p@(c,r), x)
-			| p == playerPos = do 
-				setCursorPosition r c
-				setSGR 	[ SetConsoleIntensity BoldIntensity
-						, SetColor Foreground Vivid Cyan ]
-				putChar '@'
-				setSGR [ Reset ]
-			| x == '.' = do
-				setCursorPosition r c
-				setSGR 	[ SetConsoleIntensity BoldIntensity
-						, SetColor Foreground Vivid Black ]
-				let distSq = (c-px)^2 + (r-py)^2
-				-- if (distSq > sightDist^2) || (distSq <= (sightDist - 1)^2) then putChar ' '
-					-- else if (visible p playerPos m sightDist) then putChar '.' else putChar ' '
-				-- The above shows '.'s only at the edge of vision.  It makes longer sight distances feasible,
-				-- but I think the "spotlight" effect is much cooler.
-				if (visible p playerPos m sightDist) then putChar '.' else putChar ' '
-				setSGR [ Reset ]
+		showPlayer = do
+			setCursorPosition py px
+			setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Cyan ]
+			putChar '@'
+			setSGR [ Reset ]
+		
+		edgeList = [ (x,y) |	x <- [px - sightDist - 2..px + sightDist + 2]
+								, y <- [py - sightDist - 2..py + sightDist + 2]
+								, fromIntegral ((x - px)^2 + (y - py)^2) <= (fromIntegral sightDist + sqrt 2)**2
+								, (x - px)^2 + (y - py)^2 > (sightDist)^2 ]
+		
+		-- Below, I construct a list of visible cells by shooting lines to the outer radius of visiblity.
+		-- This isn't rigourously correct, but it only noticeably faily when near a wall, so I check
+		--wall visibility explicitly.
+		nearbyWalls = [ v | v@(p,c) <- assocs m, refreshCell p, isWall c]
+		visibleWalls = [ v | v@(p,c) <- nearbyWalls, visible p playerPos m sightDist ]
+		
+		vList = (nub . concat . map (\x -> getVisible x playerPos m sightDist) $ edgeList) ++ visibleWalls
+		sList = [ x | x <- seenList state, not $ x `elem` vList ]
+		oldVList = visibleList state
+		toErase = [ v | v@(_,c) <- oldVList, c == '.', not $ v `elem` vList ]
+		newlyVisible = [ v | v <- vList, not $ v `elem` oldVList ]
+		
+		showSeen (p@(x,y), c) = do
+			setCursorPosition y x
+			setSGR [ SetConsoleIntensity FaintIntensity, SetColor Foreground Vivid Black ]
+			putChar c
+			setSGR [ Reset ]
+		
+		showVisible (p@(x,y), c)
+			| p == playerPos = showPlayer
 			| otherwise = do
-				setCursorPosition r c
-				if (visible p playerPos m sightDist) 
-					then do
-						setSGR 	[ SetConsoleIntensity BoldIntensity
-								, SetColor Foreground Vivid White ]
-						putChar x 
-						setSGR [ Reset ]
-					else if p `elem` sList
-						then do 
-							setSGR 	[ SetConsoleIntensity FaintIntensity
-									, SetColor Foreground Vivid Black ]
-							putChar x
-							setSGR [ Reset ]
-						else return ()
-				
+				setCursorPosition y x
+				colorSet c
+				putChar c
+				setSGR [ Reset ]		
+				where
+					colorSet '.' = setSGR [ SetConsoleIntensity FaintIntensity, SetColor Foreground Vivid Black ]
+					colorSet _ = setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid White ]
+					
+-- Get a list of visible cells along the line from the player to the given cell.
+getVisible :: Coord -> Coord -> MapArray -> Int -> [(Coord, Char)]
+getVisible pos@(x, y) pPos@(px, py) mapArray sightDist = 
+	map (\x -> (x, mapArray ! x)) vList -- . reverse $ (head invList):(reverse vList)
+		where
+			vList = takeWhile (\x -> (x/=pos) && (not $ isWall $ mapArray ! x)) . path (balancedWord p q 0) $ (px, py)
+			invList = dropWhile (\x -> (x/=pos) && (not $ isWall $ mapArray ! x)) . path (balancedWord p q 0) $ (px, py)
+		
+			dx = x - px
+			dy = y - py
+			
+			xyStep b (x', y') = (x' + signum dx, y' + signum dy * b)
+			yxStep b (x', y') = (x' + signum dx * b, y' + signum dy)
+			
+			(p, q, step)
+				| abs dx > abs dy 	= (abs dy, abs dx, xyStep)
+				| otherwise 		= (abs dx, abs dy, yxStep)
+			
+			path (p:ps) xy = xy:(path ps $ step p xy)
+			
+			balancedWord p' q' eps
+				| eps + p' < q' 	= 0 : balancedWord p' q' (eps + p')
+				| otherwise			= 1 : balancedWord p' q' (eps + p' - q')
+
 -- Check if a position is visible from the player.
--- I'm convinced I can think of a faster way to handle this.
 visible :: Coord -> Coord -> MapArray -> Int -> Bool
 visible pos@(x, y) pPos@(px, py) mapArray sightDist
 	| (dx > sightDist) || (dy > sightDist) = False
@@ -113,28 +152,28 @@ visible pos@(x, y) pPos@(px, py) mapArray sightDist
 	where
 		dx = x - px
 		dy = y - py
-		
+
 		xyStep b (x', y') = (x' + signum dx, y' + signum dy * b)
 		yxStep b (x', y') = (x' + signum dx * b, y' + signum dy)
-		
+
 		(p, q, step)
 			| abs dx > abs dy 	= (abs dy, abs dx, xyStep)
 			| otherwise 		= (abs dx, abs dy, yxStep)
-		
+
 		path (p:ps) xy = xy:(path ps $ step p xy)
-		
+
 		balancedWord p' q' eps
 			| eps + p' < q' 	= 0 : balancedWord p' q' (eps + p')
 			| otherwise			= 1 : balancedWord p' q' (eps + p' - q')
-			
+
 -- Check if the given coordinate is a wall.
-isWall :: Coord -> MapArray -> Bool
-isWall c m = m ! c == '#'
+isWall :: Char -> Bool
+isWall c = c == '#'
 
 -- Check if the given coordinate is an exit.
 isExit :: Coord -> MapArray -> Bool
 isExit c m = m ! c == '<'
 
 -- Check if the given coordinate is something that should persits
-isPersistent :: Coord -> MapArray -> Bool
-isPersistent c m = m ! c `elem` "><#"
+isPersistent :: Char -> Bool
+isPersistent c = c `elem` "><#"
