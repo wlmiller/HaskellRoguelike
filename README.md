@@ -6,7 +6,7 @@ This is the beginning of a roguelike programmed in Haskell.  It is intended as a
 ![Haskell Roguelike](roguelike.png)
 
 ## Playing
-Download an install a Haskell compiler (like [GHC](https://www.haskell.org/ghc/)).  The game can be run either interactively from the GHCi prompt, or compiled.
+Download an install [The Haskell Platform](http://www.haskell.org/platform/).  The game can be run either interactively from the GHCi prompt, or compiled.
 
 ### GHCi
 From the command line, launch `ghci`.  At the prompt, type:
