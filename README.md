@@ -27,7 +27,7 @@ Below are listed the characters which are displayed on the screen and what they 
 - `@`: player character
 - `>`: level entrance
 - `<`: level exit (a new level is generated when the player is placed on this character)
-- `.`: empty floow
+- `.`: empty floor
 - `#`: wall
 
 ### Controls
