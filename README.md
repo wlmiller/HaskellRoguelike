@@ -11,3 +11,5 @@ TODO:
 - [ ] Non-player characters
 - [ ] Battle
 - [ ] Items
+
+![Haskell Roguelike](roguelike.png)
