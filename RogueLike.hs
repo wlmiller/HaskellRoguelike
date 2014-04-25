@@ -58,7 +58,7 @@ handleMove dir state
 		let state = State { sPlayer = player, sEnemies = [], sMap = mapArray, seenList = [], visibleList = [], randGen = g' }
 		clearScreen
 		mainLoop state
-	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }
+	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord, pOldPos = oldCoord} }
 	where
 		player = sPlayer state
 		oldCoord = pPos player

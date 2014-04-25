@@ -55,7 +55,15 @@ toArray m = array ((0,0),(width - 1, height - 1)) [ ((x,y), (m !! y) !! x) | (x,
 	where
 		height = length m
 		width = length . head $ m
-		
+	
+-- Display a given character at a given position with a given color
+showThing :: Char -> Color -> Coord -> IO ()
+showThing char color (cx,cy) = do
+			setCursorPosition cy cx
+			setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid color ]
+			putChar char
+			setSGR [ Reset ]
+	
 -- Display the map, including line-of-sight
 showMap :: State -> IO State
 showMap state = do 
@@ -68,7 +76,7 @@ showMap state = do
 	mapM_ displaySeen sList
 	setCursorPosition 23 0
 	showCursor
-	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList, sPlayer =  player { pOldPos = playerPos } }
+	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList}
 	where
 		displaySeen v@(p,c) = if refreshCell p then showSeen v else return()
 		eraseOld ((x,y),_) = do
@@ -80,23 +88,16 @@ showMap state = do
 		oldPPos = pOldPos player
 		m = sMap state
 		refreshCell (x,y) = (x-px)^2 + (y-py)^2 < (sightDist + 2)^2
-		showPlayer = do
-			setCursorPosition py px
-			setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Cyan ]
-			putChar '@'
-			setSGR [ Reset ]
+		
+		showPlayer = showThing '@' Cyan playerPos
 			
 		showEnemies [] = return ()
-		showEnemies (e:es) =
-			if enemyPos `elem` (map fst vList)
+		showEnemies (e:es) = 
+			if (ePos e) `elem` (map fst vList)
 				then do
-					setCursorPosition ey ex
-					setSGR [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid (eColor e)]
-					putChar . eSymbol $ e
+					showThing (eSymbol e)  (eColor e) (ePos e)
 					showEnemies es
-			else return ()
-			where
-				enemyPos@(ex, ey) = ePos e
+				else return ()
 		
 		edgeList = [ (x,y) |	x <- [px - sightDist - 2..px + sightDist + 2]
 								, y <- [py - sightDist - 2..py + sightDist + 2]
@@ -111,6 +112,8 @@ showMap state = do
 		
 		vList = (nub . concat . map (\x -> getVisible x playerPos m sightDist) $ edgeList) ++ visibleWalls
 		sList = [ x | x <- seenList state, not $ x `elem` vList ]
+		ePosList = [ ePos e | e <- sEnemies state ]
+		
 		oldVList = visibleList state
 		toErase = [ v | v@(_,c) <- oldVList, c == '.', not $ v `elem` vList ]
 		newlyVisible = [ v | v <- vList, not $ v `elem` oldVList ]
@@ -122,7 +125,8 @@ showMap state = do
 			setSGR [ Reset ]
 		
 		showVisible (p@(x,y), c)
-			| p == playerPos = showPlayer
+			| p == playerPos = return ()
+			| p `elem` ePosList = return()
 			| otherwise = do
 				setCursorPosition y x
 				colorSet c
