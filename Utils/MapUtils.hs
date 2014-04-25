@@ -6,7 +6,8 @@ module Utils.MapUtils
 	, showMap
 	, getVisible
 	, isWall
-	, isExit) where
+	, isExit
+	, removeEnemy) where
 
 import Data.Array
 import Data.List
@@ -70,10 +71,13 @@ showMap state = do
 	hideCursor
 	showVisible (oldPPos, m ! oldPPos )
 	showPlayer
-	showEnemies . sEnemies $ state
 	mapM_ showVisible newlyVisible
 	mapM_ eraseOld toErase
 	mapM_ displaySeen sList
+	showEnemies . sEnemies $ state
+	setCursorPosition 23 60
+	putStr . show . length . sEnemies $ state
+	putStr " enemies remaining "
 	setCursorPosition 23 0
 	showCursor
 	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList}
@@ -92,12 +96,11 @@ showMap state = do
 		showPlayer = showThing '@' Cyan playerPos
 			
 		showEnemies [] = return ()
-		showEnemies (e:es) = 
-			if (ePos e) `elem` (map fst vList)
-				then do
-					showThing (eSymbol e)  (eColor e) (ePos e)
-					showEnemies es
+		showEnemies (e:es) = do
+			if visible (ePos e) playerPos m sightDist
+				then showThing (eSymbol e)  (eColor e) (ePos e)
 				else return ()
+			showEnemies es 
 		
 		edgeList = [ (x,y) |	x <- [px - sightDist - 2..px + sightDist + 2]
 								, y <- [py - sightDist - 2..py + sightDist + 2]
@@ -116,7 +119,7 @@ showMap state = do
 		
 		oldVList = visibleList state
 		toErase = [ v | v@(_,c) <- oldVList, c == '.', not $ v `elem` vList ]
-		newlyVisible = [ v | v <- vList, not $ v `elem` oldVList ]
+		newlyVisible = [ v | v@(_,c) <- vList, or [(not $ v `elem` oldVList) , (c == '<')] ]
 		
 		showSeen (p@(x,y), c) = do
 			setCursorPosition y x
@@ -134,6 +137,9 @@ showMap state = do
 				setSGR [ Reset ]		
 				where
 					colorSet '.' = setSGR [ SetConsoleIntensity FaintIntensity, SetColor Foreground Vivid Black ]
+					colorSet '<' = if exitActive state
+						then setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid White ]
+						else setSGR [ SetConsoleIntensity FaintIntensity, SetColor Foreground Dull Red ]
 					colorSet _ = setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid White ]
 					
 -- Get a list of visible cells along the line from the player to the given cell.
@@ -194,3 +200,8 @@ isExit c m = m ! c == '<'
 -- Check if the given coordinate is something that should persits
 isPersistent :: Char -> Bool
 isPersistent c = c `elem` "><#"
+
+-- Kill an enemy.
+-- TODO: move this to a different module
+removeEnemy :: Coord -> State -> State
+removeEnemy pos state = state { sEnemies = [ e | e <- sEnemies state, not $ pos == ePos e], exitActive = (length . sEnemies $ state) == 1 }
