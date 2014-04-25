@@ -14,14 +14,24 @@ ySize = 23
 roomX = (-15,15)
 roomY = (-5,5)
 
+enemyCount = 10	-- Hard-coding for now
+
 -- Create a level with a random map plus entry and exit points.  Eventually, add other stuff.
-createLevel :: (RandomGen g) => g -> ([[Char]], g)
-createLevel g = (addChar '<' startPos . addChar '>' endPos $ m, g''')
+createLevel :: (RandomGen g) => g -> (([[Char]], g),[Coord])
+createLevel g = ((addChar '<' startPos . addChar '>' endPos $ m, g''), enemies)
 	where
 		emptyMap = replicate ySize . replicate xSize $ '#'
 		(m, g') = generateMap emptyMap g
-		(startPos, g'') = selectOpen m g'
-		(endPos, g''') = selectOpen m g''
+		
+		selectOpens 0 _ _ g = ([], g)
+		selectOpens n occ m g = 
+			if pos `elem` occ
+				then (fst $ selectOpens n occ m gs, snd $ selectOpens n occ m gs)
+				else (pos:(fst $ selectOpens (n-1) (pos:occ) m gs), snd $ selectOpens (n-1) (pos:occ) m gs)
+			where
+				(pos, gs) = selectOpen m g
+		
+		(startPos:endPos:enemies,g'') = selectOpens (enemyCount + 2) [] m g'
 
 -- Insert a character at a given position in the map.
 addChar :: a -> (Int, Int) -> [[a]] -> [[a]]

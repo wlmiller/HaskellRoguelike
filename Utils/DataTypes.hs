@@ -19,11 +19,12 @@ data Player = Player 	{ pPos :: Coord
 data Enemy = Enemy	{ ePos :: Coord
 						, eOldPos :: Coord 
 						, eSymbol :: Char
-						, eColor :: Color }
+						, eColor :: Color } 
 
 data State = State	{ sPlayer :: Player
 					, sEnemies :: [Enemy]
 					, sMap :: MapArray
 					, seenList :: [(Coord, Char)]
 					, visibleList :: [(Coord, Char)]
-					, randGen :: StdGen }
+					, randGen :: StdGen
+					, exitActive :: Bool }

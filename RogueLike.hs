@@ -18,14 +18,16 @@ inputToCoord _   = (0, 0)
 main = do
 	hSetBuffering stdin NoBuffering  -- Doesn't actually work on Windows!
 	g <- getStdGen
-	let (m, g') = createLevel g
-	let mapArray = toArray m
-	let player = Player { pPos = (findChar '>' mapArray), pOldPos = (findChar '>' mapArray) }
-	let tempEnemy = Enemy {ePos = fst . selectOpen m $ g', eOldPos = (1,1), eSymbol = '%', eColor = Green}
-	let  enemy = tempEnemy {eOldPos = ePos tempEnemy}
-	let state = State { sPlayer = player, sEnemies = [enemy], sMap = mapArray, seenList = [], visibleList = [], randGen = g'}
+	let state = newLevel g
 	clearScreen
 	mainLoop state
+	
+newLevel g = State { sPlayer = player, sEnemies = enemyList, sMap = mapArray, seenList = [], visibleList = [], randGen = g' , exitActive = False}
+	where
+		((m, g'), enemyPosList) = createLevel g
+		mapArray = toArray m
+		player = Player { pPos = (findChar '>' mapArray), pOldPos = (findChar '>' mapArray) }
+		enemyList = [ Enemy { ePos = pos, eOldPos = pos, eSymbol = '%', eColor = Green } | pos <- enemyPosList ]
 	
 -- The main game loop.
 mainLoop :: State -> IO ()
@@ -52,13 +54,15 @@ handleMove dir state
 	| isWall $ mapArray ! newCoord = mainLoop state
 	| isExit newCoord mapArray = do
 		showMap state { sPlayer = player {pPos = newCoord} }
-		let g = randGen state
-		let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
-		let player = Player { pPos = (findChar '>' mapArray), pOldPos = (findChar '>' mapArray) }
-		let state = State { sPlayer = player, sEnemies = [], sMap = mapArray, seenList = [], visibleList = [], randGen = g' }
+		let newState = newLevel (randGen state)
 		clearScreen
-		mainLoop state
-	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord, pOldPos = oldCoord} }
+		mainLoop newState
+	| otherwise = do
+		let newState = 
+			if newCoord `elem` [ ePos e | e <- sEnemies state] 
+				then removeEnemy newCoord state
+				else state
+		mainLoop newState { sPlayer = player {pPos = newCoord, pOldPos = oldCoord} }
 	where
 		player = sPlayer state
 		oldCoord = pPos player
