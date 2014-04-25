@@ -8,7 +8,7 @@ import System.Console.ANSI
 import Utils.DataTypes
 
 xSize = 79
-ySize = 25
+ySize = 23
 
 roomX = (-15,15)
 roomY = (-5,5)

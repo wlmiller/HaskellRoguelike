@@ -65,7 +65,7 @@ showMap state = do
 	mapM_ showVisible newlyVisible
 	mapM_ eraseOld toErase
 	mapM_ displaySeen sList
-	setCursorPosition 30 0
+	setCursorPosition 23 0
 	showCursor
 	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList, sPlayer =  player { oldPos = playerPos } }
 	where

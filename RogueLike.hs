@@ -40,7 +40,7 @@ handleInput x state = handleMove (inputToCoord x) state
 exit :: IO()
 exit = do
 	clearScreen
-	setCursorPosition 30 0
+	setCursorPosition 24 0
 	putStrLn "Thanks for playing!\n"
 
 -- Updates the state based on the user's direction input.
