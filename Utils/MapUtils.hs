@@ -67,7 +67,7 @@ showMap state = do
 	mapM_ displaySeen sList
 	setCursorPosition 23 0
 	showCursor
-	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList, sPlayer =  player { oldPos = playerPos } }
+	return state { seenList = nub [ v | v@(x,c) <- vList, isPersistent c ]++sList, visibleList = vList, sPlayer =  player { pOldPos = playerPos } }
 	where
 		displaySeen v@(p,c) = if refreshCell p then showSeen v else return()
 		eraseOld ((x,y),_) = do
@@ -76,7 +76,7 @@ showMap state = do
 	
 		player = sPlayer state
 		playerPos@(px, py) = pPos player
-		oldPPos = oldPos player
+		oldPPos = pOldPos player
 		m = sMap state
 		refreshCell (x,y) = (x-px)^2 + (y-py)^2 < (sightDist + 2)^2
 		showPlayer = do

@@ -19,8 +19,8 @@ main = do
 	hSetBuffering stdin NoBuffering  -- Doesn't actually work on Windows!
 	g <- getStdGen
 	let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
-	let player = Player { pPos = (findChar '>' mapArray), oldPos = (findChar '>' mapArray) }
-	let state = State { sPlayer = player, sMap = mapArray, seenList = [], visibleList = [], randGen = g }
+	let player = Player { pPos = (findChar '>' mapArray), pOldPos = (findChar '>' mapArray) }
+	let state = State { sPlayer = player, sEnemies = [], sMap = mapArray, seenList = [], visibleList = [], randGen = g }
 	clearScreen
 	mainLoop state
 	
@@ -51,8 +51,8 @@ handleMove dir state
 		showMap state { sPlayer = player {pPos = newCoord} }
 		let g = randGen state
 		let (mapArray, g') = (\(m, gen) -> (toArray m, gen)) . createLevel $ g
-		let player = Player { pPos = (findChar '>' mapArray), oldPos = (findChar '>' mapArray) }
-		let state = State { sPlayer = player, sMap = mapArray, seenList = [], visibleList = [], randGen = g' }
+		let player = Player { pPos = (findChar '>' mapArray), pOldPos = (findChar '>' mapArray) }
+		let state = State { sPlayer = player, sEnemies = [], sMap = mapArray, seenList = [], visibleList = [], randGen = g' }
 		clearScreen
 		mainLoop state
 	| otherwise = mainLoop state { sPlayer = player {pPos = newCoord} }
