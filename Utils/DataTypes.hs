@@ -7,6 +7,7 @@ module Utils.DataTypes
 	
 import Data.Array
 import System.Random
+import System.Console.ANSI
 
 type MapArray = Array (Int, Int) Char
 	
@@ -16,7 +17,9 @@ data Player = Player 	{ pPos :: Coord
 						, pOldPos :: Coord }
 						
 data Enemy = Enemy	{ ePos :: Coord
-						, eOldPos :: Coord }
+						, eOldPos :: Coord 
+						, eSymbol :: Char
+						, eColor :: Color }
 
 data State = State	{ sPlayer :: Player
 					, sEnemies :: [Enemy]

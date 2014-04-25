@@ -1,5 +1,6 @@
 module Utils.RandomMap 
-	(createLevel) where
+	(createLevel
+	, selectOpen) where
 
 import Data.Array
 import Data.List (nub)

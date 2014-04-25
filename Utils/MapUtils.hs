@@ -62,6 +62,7 @@ showMap state = do
 	hideCursor
 	showVisible (oldPPos, m ! oldPPos )
 	showPlayer
+	showEnemies . sEnemies $ state
 	mapM_ showVisible newlyVisible
 	mapM_ eraseOld toErase
 	mapM_ displaySeen sList
@@ -84,6 +85,18 @@ showMap state = do
 			setSGR [ SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid Cyan ]
 			putChar '@'
 			setSGR [ Reset ]
+			
+		showEnemies [] = return ()
+		showEnemies (e:es) =
+			if enemyPos `elem` (map fst vList)
+				then do
+					setCursorPosition ey ex
+					setSGR [SetConsoleIntensity BoldIntensity, SetColor Foreground Vivid (eColor e)]
+					putChar . eSymbol $ e
+					showEnemies es
+			else return ()
+			where
+				enemyPos@(ex, ey) = ePos e
 		
 		edgeList = [ (x,y) |	x <- [px - sightDist - 2..px + sightDist + 2]
 								, y <- [py - sightDist - 2..py + sightDist + 2]
@@ -91,8 +104,8 @@ showMap state = do
 								, (x - px)^2 + (y - py)^2 > (sightDist)^2 ]
 		
 		-- Below, I construct a list of visible cells by shooting lines to the outer radius of visiblity.
-		-- This isn't rigourously correct, but it only noticeably faily when near a wall, so I check
-		--wall visibility explicitly.
+		-- This isn't rigorously correct, but it only noticeably fails when near a wall, so I check
+		-- wall visibility explicitly.
 		nearbyWalls = [ v | v@(p,c) <- assocs m, refreshCell p, isWall c]
 		visibleWalls = [ v | v@(p,c) <- nearbyWalls, visible p playerPos m sightDist ]
 		
