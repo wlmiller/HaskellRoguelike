@@ -3,7 +3,10 @@ Haskell Roguelike
 
 This is the beginning of a roguelike programmed in Haskell.  It is intended as a challeng/learning exercise, and will likely be perpetually incomplete.
 
-![Haskell Roguelike](roguelike.png)
+![Haskell Roguelike](roguelike.png?raw=true)
+
+## Requirements
+- [ansi-terminal](http://batterseapower.github.io/ansi-terminal/): `cabal install ansi-terminal`
 
 ## Playing
 Download an install [The Haskell Platform](http://www.haskell.org/platform/).  The game can be run either interactively from the GHCi prompt, or compiled.
