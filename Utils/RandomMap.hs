@@ -43,8 +43,6 @@ selectOpen m g
 	
 -- Randomly generate a map.  This is done by carving out rectangles, 
 -- always starting from a carved-out cell to ensure connectedness.
--- This is quite slow and I'd like to come up with a faster way,
--- but I like the result.
 generateMap :: (RandomGen g) => [[Char]] -> g -> ([[Char]], g)
 generateMap m g
 	| not $ ((x + dx) `elem` [1..(xSize-2)]) && ((y + dy) `elem` [1..(ySize-2)]) = generateMap m g'''''
