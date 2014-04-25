@@ -26,7 +26,7 @@ ghc RogueLike.hs
 Launch the resulting compiled file.
 
 ### Gameplay
-The current goal is to kill all of the enemies (`%`) on the level (by walking over them).  The exit (`<`) is lcked until all enemies are cleared.  There is an enemy count at the bottom of the terminal.
+The current goal is to kill all of the enemies (`%`) on the level (by walking over them).  The exit (`<`) is locked until all enemies are cleared.  There is an enemy count at the bottom of the terminal.
 
 ### Game display
 Below are listed the characters which are displayed on the screen and what they represent:
