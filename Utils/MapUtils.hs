@@ -7,7 +7,8 @@ module Utils.MapUtils
 	, getVisible
 	, isWall
 	, isExit
-	, removeEnemy) where
+	, removeEnemy
+	, isBlocked) where
 
 import Data.Array
 import Data.List
@@ -69,11 +70,12 @@ showThing char color (cx,cy) = do
 showMap :: State -> IO State
 showMap state = do 
 	hideCursor
-	showVisible (oldPPos, m ! oldPPos )
+	showVisible (oldPPos, m ! oldPPos)
 	showPlayer
 	mapM_ showVisible newlyVisible
 	mapM_ eraseOld toErase
 	mapM_ displaySeen sList
+	mapM_ showVisible eOldPosList
 	showEnemies . sEnemies $ state
 	setCursorPosition 23 60
 	putStr . show . length . sEnemies $ state
@@ -117,9 +119,11 @@ showMap state = do
 		sList = [ x | x <- seenList state, not $ x `elem` vList ]
 		ePosList = [ ePos e | e <- sEnemies state ]
 		
+		eOldPosList = [ (eOldPos e, m ! eOldPos e) | e <- sEnemies state ]
+		
 		oldVList = visibleList state
-		toErase = [ v | v@(_,c) <- oldVList, c == '.', not $ v `elem` vList ]
-		newlyVisible = [ v | v@(_,c) <- vList, or [(not $ v `elem` oldVList) , (c == '<')] ]
+		toErase = [ v | v@(_,c) <- oldVList, c == '.', not $ v `elem` vList ]-- ++ eOldPosList
+		newlyVisible = [ v | v@(_,c) <- vList, (not $ v `elem` oldVList) || (c == '<') ]
 		
 		showSeen (p@(x,y), c) = do
 			setCursorPosition y x
@@ -200,6 +204,14 @@ isExit c m = m ! c == '<'
 -- Check if the given coordinate is something that should persits
 isPersistent :: Char -> Bool
 isPersistent c = c `elem` "><#"
+
+-- Check if enemies are prevented from enetering the given coordinate.
+isBlocked :: Coord -> State -> Bool
+isBlocked pos state = (isPersistent $ m ! pos) || (pos `elem` ePosList) || (pos == playerPos)
+	where
+		m = sMap state
+		playerPos = pPos . sPlayer $ state
+		ePosList = [ ePos e | e <- sEnemies state ]
 
 -- Kill an enemy.
 -- TODO: move this to a different module

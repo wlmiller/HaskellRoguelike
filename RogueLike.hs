@@ -39,6 +39,7 @@ mainLoop state = do
 -- Handle user input.
 handleInput :: Char -> State -> IO ()
 handleInput 'p' _ = exit  -- Using 'p' for quit because 'q' is so close to WASD.
+handleInput '\n' state = mainLoop state
 handleInput x state = handleMove (inputToCoord x) state 
 
 -- Exit the game.
@@ -51,7 +52,8 @@ exit = do
 -- Updates the state based on the user's direction input.
 handleMove :: Coord -> State -> IO ()
 handleMove dir state
-	| isWall $ mapArray ! newCoord = mainLoop state
+	| isWall $ mapArray ! newCoord = do
+		mainLoop . moveEnemies $ state
 	| isExit newCoord mapArray = do
 		showMap state { sPlayer = player {pPos = newCoord} }
 		let newState = newLevel (randGen state)
@@ -59,10 +61,10 @@ handleMove dir state
 		mainLoop newState
 	| otherwise = do
 		let newState = 
-			if newCoord `elem` [ ePos e | e <- sEnemies state] 
-				then removeEnemy newCoord state
-				else state
-		mainLoop newState { sPlayer = player {pPos = newCoord, pOldPos = oldCoord} }
+			if newCoord `elem` [ ePos e | e <- sEnemies state ] 
+				then moveEnemies . removeEnemy newCoord $ state
+				else moveEnemies state
+		mainLoop newState { sPlayer = player { pPos = newCoord, pOldPos = oldCoord } }
 	where
 		player = sPlayer state
 		oldCoord = pPos player
@@ -70,6 +72,33 @@ handleMove dir state
 		
 		mapArray = sMap state
 		
+		g = randGen state
+		
+		-- TO DO: Make a more general 'update state' function and remove it from handleMove - for future functionality
+		moveEnemies state = state { randGen = snd . moveAll (sEnemies state) $ g, sEnemies = fst . moveAll (sEnemies state) $ g }
+			where
+				moveAll [] gm = ([], gm)
+				moveAll (e:es) gm = 
+					let	(newPos, gm') = randomMove (ePos e) state gm
+						(theRest, gm'') = moveAll es gm'
+					in 	(e { ePos = newPos, eOldPos = ePos e }:theRest, gm'')
+		
 -- Add two coordinates together.
 addCoords :: Coord -> Coord -> Coord
 addCoords (x,y) (x', y') = (x + x', y + y')
+
+-- Randomly move a non-player character.  For now, the character has equal
+-- chance of moving in any direction (given no walls to run into) or staying
+-- still.  This will likely change.
+-- TO DO: move to a different module
+randomMove :: (RandomGen g) => Coord -> State -> g -> (Coord, g)
+randomMove pos state g = (newPos, g')
+	where
+		moves = [(0,0),(1,0),(-1,0),(0,1),(0,-1)]
+		(choice, g') = randomR (0, length moves - 1) g
+		delta = moves !! choice
+		
+		m = sMap state
+		newPos = if not . isBlocked (addCoords pos delta) $ state
+			then addCoords pos delta
+			else pos
