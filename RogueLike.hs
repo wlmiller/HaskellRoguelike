@@ -62,9 +62,9 @@ handleMove dir state
 	| otherwise = do
 		let newState = 
 			if newCoord `elem` [ ePos e | e <- sEnemies state ] 
-				then moveEnemies . removeEnemy newCoord $ state
-				else moveEnemies state
-		mainLoop newState { sPlayer = player { pPos = newCoord, pOldPos = oldCoord } }
+				then moveEnemies . removeEnemy newCoord $ state { sPlayer = player { pPos = newCoord, pOldPos = oldCoord } }
+				else moveEnemies state { sPlayer = player { pPos = newCoord, pOldPos = oldCoord } }
+		mainLoop newState
 	where
 		player = sPlayer state
 		oldCoord = pPos player
