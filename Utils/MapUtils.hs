@@ -201,11 +201,11 @@ isWall c = c == '#'
 isExit :: Coord -> MapArray -> Bool
 isExit c m = m ! c == '<'
 
--- Check if the given coordinate is something that should persits
+-- Check if the given coordinate is something that should persist
 isPersistent :: Char -> Bool
 isPersistent c = c `elem` "><#"
 
--- Check if enemies are prevented from enetering the given coordinate.
+-- Check if enemies are prevented from entering the given coordinate.
 isBlocked :: Coord -> State -> Bool
 isBlocked pos state = (isPersistent $ m ! pos) || (pos `elem` ePosList) || (pos == playerPos)
 	where
