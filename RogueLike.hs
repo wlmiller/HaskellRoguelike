@@ -75,6 +75,7 @@ handleMove dir state
 		g = randGen state
 		
 		-- TO DO: Make a more general 'update state' function and remove it from handleMove - for future functionality
+		-- TO DO: Enemies can move onto the same coord!
 		moveEnemies state = state { randGen = snd . moveAll (sEnemies state) $ g, sEnemies = fst . moveAll (sEnemies state) $ g }
 			where
 				moveAll [] gm = ([], gm)
